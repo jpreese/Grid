@@ -12,6 +12,51 @@
 	Grid status module for tracking buffs/debuffs.
 ----------------------------------------------------------------------]]
 
+local UnitAuraCache = {} -- cached values are updated ten times per second and stored by unit+filter
+function UnitAuraWrapper(unit, ...) -- 7.x to 8.x transience 2nd return value removed and only spellID argument is supported
+    local retTable
+    local index = select(1,...)
+    if type(index) == 'number' then -- now only spellID is accepted
+        retTable = {_G.UnitAura(unit, ...)}
+        if retTable[1] then table.insert(retTable,2,'') end
+    elseif type(index) == 'string' then -- lookup by spellName must be done on own by fetching all auras and then looking up by name
+        local index, filter = select(1,...)
+        local key = string.lower(filter or 'default')
+        index = string.lower(index) -- lookup by spell name
+        unit = string.lower(unit)
+        local cache = UnitAuraCache[unit] -- fetch unit aura cache
+		if cache and cache[key] and cache[key]['stamp'] == ("%.1f"):format(GetTime()) then -- cached values updated 10 times per second
+			if cache[key][index] then retTable = cache[key][index] else retTable = {} end
+		  else -- fetch new cached value
+            if not UnitAuraCache[unit] then UnitAuraCache[unit] = {} end
+            if not UnitAuraCache[unit][key] then UnitAuraCache[unit][key] = {} else table.wipe(UnitAuraCache[unit][key]) end
+            cache = UnitAuraCache[unit][key]
+            local n = 1
+            local name
+            repeat
+                retTable = {_G.UnitAura(unit, n, filter)}
+                name = retTable[1]
+                if name then
+                    table.insert(retTable,2,'')
+                    cache[string.lower(name)] = retTable -- there is no table.copy
+                end
+                n = n + 1
+            until not name;
+            cache['stamp'] = ("%.1f"):format(GetTime())
+            if cache[index] then
+                retTable = cache[index]
+            else
+                retTable = {nil}
+            end
+        end
+    end
+    return unpack(retTable)
+end
+
+---------------------
+-- WRAPPER FOR 8.0 --
+---------------------
+
 local _, Grid = ...
 local L = Grid.L
 
@@ -1574,7 +1619,7 @@ function GridStatusAuras:ScanUnitAuras(event, unit, guid)
 	if UnitIsVisible(unit) then
 		-- scan for buffs
 		for buff_name in pairs(buff_names) do
-			local name, rank, icon, count, debuffType, duration, expirationTime, caster, isStealable = UnitAura(unit, buff_name, nil, "HELPFUL")
+			local name, rank, icon, count, debuffType, duration, expirationTime, caster, isStealable = UnitAuraWrapper(unit, buff_name, nil, "HELPFUL")
 			if name then
 				buff_names_seen[name] = true
 				self:UnitGainedBuff(guid, class, name, rank, icon, count, debuffType, duration, expirationTime, caster, isStealable)
@@ -1583,7 +1628,7 @@ function GridStatusAuras:ScanUnitAuras(event, unit, guid)
 
 		-- scan for buffs cast by the player
 		for buff_name in pairs(player_buff_names) do
-			local name, rank, icon, count, debuffType, duration, expirationTime, caster, isStealable = UnitAura(unit, buff_name, nil, "HELPFUL|PLAYER")
+			local name, rank, icon, count, debuffType, duration, expirationTime, caster, isStealable = UnitAuraWrapper(unit, buff_name, nil, "HELPFUL|PLAYER")
 			if name then
 				player_buff_names_seen[name] = true
 				self:UnitGainedPlayerBuff(guid, class, name, rank, icon, count, debuffType, duration, expirationTime, caster, isStealable)
