@@ -7,11 +7,7 @@ For options, type `/grid`, right-click the tab on the Grid layout frame, or righ
 
 ### Need Help?
 
-- **[Report a bug](https://wow.curseforge.com/addons/grid/pages/how-to-report-a-bug-in-grid/)**
-- [Suggest a feature](https://wow.curseforge.com/addons/grid/tickets/?status=+&type=e)
-- [Frequently asked questions](https://github.com/Phanx/Grid/wiki/FAQ)
-- [API documentation for plugin authors](https://github.com/Phanx/Grid/wiki)
-
+This fork is maintained by [Leksy](https://worldofwarcraft.com/en-us/character/thrall/leksy)
 
 ### Localization
 
