@@ -12,6 +12,10 @@
 	Grid status module for tracking buffs/debuffs.
 ----------------------------------------------------------------------]]
 
+---------------------
+-- WRAPPER FOR 8.0 --
+---------------------
+
 local UnitAuraCache = {} 
 function UnitAuraWrapper(unit, ...) 
     local retTable
@@ -24,7 +28,7 @@ function UnitAuraWrapper(unit, ...)
         local key = string.lower(filter or 'default')
         index = string.lower(index) 
         unit = string.lower(unit)
-        local cache = UnitAuraCache[unit] -
+        local cache = UnitAuraCache[unit]
 		if cache and cache[key] and cache[key]['stamp'] == ("%.1f"):format(GetTime()) then 
 			if cache[key][index] then retTable = cache[key][index] else retTable = {} end
 		  else 
