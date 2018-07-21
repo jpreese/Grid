@@ -12,9 +12,12 @@
 	Grid status module for tracking buffs/debuffs.
 ----------------------------------------------------------------------]]
 
----------------------
--- WRAPPER FOR 8.0 --
----------------------
+----------------------
+-- WRAPPERS FOR 8.0 --
+----------------------
+
+local GetBuildInfo = _G.GetBuildInfo; assert(GetBuildInfo ~= nil,'GetBuildInfo')
+local _, _, _, tocVersion = GetBuildInfo()
 
 local UnitAuraCache = {} 
 function UnitAuraWrapper(unit, ...) 
@@ -57,9 +60,52 @@ function UnitAuraWrapper(unit, ...)
     return unpack(retTable)
 end
 
----------------------
--- WRAPPER FOR 8.0 --
----------------------
+local UnitDebuffCache = {} 
+function UnitDebuffWrapper(unit, ...) 
+  if tocVersion < 80000 then return _G.UnitDebuff(unit, ...) end
+  local retTable
+  local index = select(1,...)
+  if type(index) == 'number' then 
+    retTable = {_G.UnitDebuff(unit, ...)}
+    if retTable[1] then table.insert(retTable,2,'') end
+  elseif type(index) == 'string' then 
+    local index, _, filter = select(1,...)
+    local key = string.lower(filter or 'default')
+    index = string.lower(index)
+    unit = string.lower(unit)
+    local cache = UnitDebuffCache[unit] 
+	if cache and cache[key] and cache[key]['stamp'] == ("%.1f"):format(GetTime()) then
+		if cache[key][index] then retTable = cache[key][index] else retTable = {} end
+	  else 
+      if not UnitDebuffCache[unit] then UnitDebuffCache[unit] = {} end
+      if not UnitDebuffCache[unit][key] then UnitDebuffCache[unit][key] = {} else table.wipe(UnitDebuffCache[unit][key]) end
+      cache = UnitDebuffCache[unit][key]
+      local n = 1
+      local name
+      repeat
+        retTable = {_G.UnitDebuff(unit, n, filter)}
+        name = retTable[1]
+        if name then
+          table.insert(retTable,2,'')
+          cache[string.lower(name)] = retTable
+        end
+        n = n + 1
+      until not name;
+      cache['stamp'] = ("%.1f"):format(GetTime())
+      if cache[index] then
+        retTable = cache[index]
+      else
+        retTable = {nil}
+      end
+    end
+  end
+  if retTable == nil then return nil end
+  return unpack(retTable)
+end
+
+----------------------
+-- WRAPPERS FOR 8.0 --
+----------------------
 
 local _, Grid = ...
 local L = Grid.L
