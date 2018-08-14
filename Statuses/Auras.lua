@@ -1687,7 +1687,7 @@ function GridStatusAuras:ScanUnitAuras(event, unit, guid)
 
 		-- scan for debuffs
 		for index = 1, 40 do
-			local name, rank, icon, count, debuffType, duration, expirationTime, casterUnit, canStealOrPurge, shouldConsolidate, spellID, canApply, isBossAura, isCastByPlayer = UnitAura(unit, index, "HARMFUL")
+			local name, rank, icon, count, debuffType, duration, expirationTime, casterUnit, canStealOrPurge, shouldConsolidate, spellID, canApply, isBossAura, isCastByPlayer = UnitAuraWrapper(unit, index, "HARMFUL")
 			if not name then
 				break
 			end
